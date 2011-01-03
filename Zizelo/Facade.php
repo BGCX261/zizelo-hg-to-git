@@ -4,8 +4,6 @@ class Zizelo_Facade {
     const RELEVANCE_HASH    = 0.5;
     const RELEVANCE_MINIMAL = 0.3;
 
-    const FREQUENCY_MAX     = 0.01;
-
     private static $default_storage;
     private static $default_analyzer;
     private static $indexes = array();
@@ -62,12 +60,16 @@ class Zizelo_Facade {
     /**
      * Add a new document to the index.
      * @param integer $id
-     * @param string $text
+     * @param string|array $text
      * @return Zizelo_Facade
      * @throw Zizelo_Exception on empty document (no word can be extracted)
      * @throw Zizelo_Exception if document already exists
      */
     public function addDocument($id, $text) {
+        if (is_array($text)) {
+            $text = implode(" ", $text);
+        }
+
         $words = $this->getAnalyzer()->extractWords($text);
         if (empty($words)) {
             throw new Zizelo_Exception("No word can be extracted from this document, it seems empty");
@@ -104,14 +106,6 @@ class Zizelo_Facade {
         $words = $this->getAnalyzer()->extractWords($text);
         if (empty($words)) {
             return array();
-        }
-
-        $this->getStorage()->calculateWordsFrequency($words);
-
-        foreach ($words as $i => $word) {
-            if ($word["frequency"] > self::FREQUENCY_MAX) {
-                unset($words[$i]);
-            }
         }
 
         $documents = $this->getStorage()->findDocuments($this->getName(), $words);
